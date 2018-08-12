@@ -1,0 +1,432 @@
+%Vijaypriya Ganesan
+%BIEN101
+%Implementation 1
+%10/3/15
+
+
+%%% FUNCTION #1: Declare parameters and execute figure functions.
+function main
+% Initial Conditions
+%IC = [5e-12 90e-9 170e-9 20e-9 0.7e-9 1.43e-6];
+%IC(1) = TF?VIIa = 5e-12 M; IC(2) = IX = 90e-9 M; IC(3) = X = 170e-9 M; 
+%IC(4) = V = 20e-9 M; IC(5) = VII = 0.7e-9 M; IC(6) = Prothrombin = 1.4e-6 M;
+%you still need 18 ICs, its just that the rest are 0. -CW
+%Declare initial values of concentration of each species.
+IC = zeros(1,18);
+%Non-zero initial conditions taKen from the Lawson et. al. paper.-CW
+IC(1)=5e-12;   %TF-VIIa
+IC(2)=90e-9;   %IX
+IC(3)=170e-9;  %X
+IC(4)=20e-9;   %V
+IC(5)=0.7e-9;  %VIII
+IC(6)=1.4e-6;  %prothrombin
+
+% Rate Constants used to model the activation of thrombin
+K = [2e7 2e7 1e7 2e7 1e7 1e8 1e7 4e8 0.005 0.4 0.3 1.15 8.2 32 1e5 24 44 0.001 70 0.02];
+%K(1) = K1 = 2e7 1/M*s; K(2) = K2 = 2e7 1/M*s; K(3) = K3 = 1e7 1/M*s; 
+%K(4) = K4 = 2e7 1/M*s; K(5) = K5 = 1e7 1/M*s; K(6) = K6 = 1e8 1/M*s;
+%K(7) = K7 = 1e7 1/M*s; K(8) = K8 = 4e8 1/M*s; K(9) = K9 = 0.005 s^-1;
+%K(10) = K10 = 0.4 s^-1; K(11) = K11 = 0.3 s^-1; K(12) = K12 = 1.15 s^-1;
+%K(13) = K13 = 8.2 s^-1; K(14) = K14 = 32 s^-1; K(15) = K15 = 1e5 1/M*s;
+%K(16) = K16 = 24 s^-1; K(17) = K17 = 44 s^-1; K(18) = K18 = 0.001 s^-1;
+%K(19) = K19 = 70 s^-1; K(20) = K20 = 0.02 s^-1;
+
+% Time span 
+tspan=[0:5:240]; 
+options = odeset ('AbsTol', 1e-10, 'RelTol', 1e-8); % Goes with revised version of funct. 3
+figure1a(IC,K,tspan, options);
+figure
+figure1b(IC,K,tspan, options);
+figure
+figure2a(IC,K,tspan, options);
+figure
+figure2b(IC,K,tspan, options);
+figure
+figure2c(IC,K,tspan, options);
+figure
+figure3(IC,K,tspan, options);
+figure
+figure4(IC,K,tspan, options);
+figure
+figure5a(IC,K,tspan, options);
+figure
+figure5b(IC,K,tspan, options);
+figure
+figure6(IC,K,tspan, options);
+% Run Figure function
+
+end
+
+%%% FUNCTION #2: Declare ODE's and define cdot vectors.
+function cdot = Pbinding(t, c, K)
+
+cdot = zeros(18,1);
+% c(1) =  [TF?VIIa] 
+% c(2) =  [IX] 
+% c(3) =  [X]
+% c(4) =  [V]
+% c(5) =  [VIII] 
+% c(6) =  [II] = [Prothrombin]
+% c(7) =  [VIIIa?IXa]
+% c(8) =  [Va?Xa]
+% c(9) =  [IIa]
+% c(10) = [Va?Xa?II]
+% c(11) = [mIIa]
+% c(12) = [TF?VIIa?IX]
+% c(13) = [TF?VIIa?X]
+% c(14) = [VIIIa?IXa?X]
+% c(15) = [IXa]
+% c(16) = [Xa]
+% c(17) = [Va]
+% c(18) = [VIIIa]
+
+cdot(1) = K(11)*c(12) - K(6)*c(1)*c(2) + K(16)*c(12) + K(12)*c(13) - K(6)*c(1)*c(3) + K(17)*c(13); % d[TF*VIIa]
+cdot(2) = K(16)*c(12) - K(6)*c(1)*c(2) - K(15)*c(2)*c(16) - K(15)*c(2)*c(8); % d[IX]
+cdot(3) = K(17)*c(13) - K(6)*c(1)*c(3) - K(6)*c(7)*c(3) + K(18)*c(14); % d[X]
+cdot(4) = -K(1)*c(4)*c(16) - K(2)*c(4)*c(9) - K(2)*c(4)*c(11); % d[V]
+cdot(5) = -K(3)*c(5)*c(16) - K(4)*c(5)*c(9) - K(4)*c(5)*c(11); % d[VIII]
+cdot(6) = K(19)*c(10) - K(6)*c(8)*c(6); % d[II]
+cdot(7) = K(7)*c(18)*c(15) - K(9)*c(7) - K(6)*c(7)*c(3) + K(18)*c(14) + K(13)*c(14) - K(20)*c(7); % d[VIIIa?IXa]
+cdot(8) = K(8)*c(16)*c(17) - K(10)*c(8) + K(19)*c(10) - K(6)*c(8)*c(6) + K(14)*c(10); % d[Va?Xa]
+cdot(9) = K(5)*c(8)*c(11); % d[IIa]
+cdot(10) = K(6)*c(8)*c(6) - K(19)*c(10) - K(14)*c(10); % d[Va*Xa*II]
+cdot(11) = K(14)*c(10) - K(5)*c(8)*c(11); % d[mIIa]
+cdot(12) = K(6)*c(1)*c(2) - K(16)*c(12) - K(11)*c(12); % d[TF*VIIa*IX]
+cdot(13) = K(6)*c(1)*c(3) - K(17)*c(13) - K(12)*c(13); % d[TF*VIIa*X]
+cdot(14) = K(6)*c(7)*c(3) - K(18)*c(14) - K(13)*c(14); % d[VIIIa*IXa*X]
+cdot(15) = K(9)*c(7) - K(7)*c(18)*c(15) + K(11)*c(12) + K(15)*c(2)*c(16) + K(15)*c(2)*c(8); % d[IXa]
+cdot(16) = (K(10)*c(8)) - (K(8)*c(16)*c(17)) + (K(12)*c(13)) + (K(13)*c(14)); %d[Xa]
+cdot(17) = K(10)*c(8) - K(8)*c(16)*c(17) + K(1)*c(4)*c(16) + K(2)*c(4)*c(9) + K(2)*c(4)*c(11);%d[Va]
+cdot(18) = K(9)*c(7) - K(7)*c(18)*c(15) + K(3)*c(5)*c(16) + K(4)*c(5)*c(9) + K(4)*c(5)*c(11); % d[VIIIa]
+
+end
+
+%%% FUNCTIONS BELOW: Create figures 1 through 6 (10 graphs total)
+function figure1a(IC,K,tspan,options) 
+%Solve ODE Statement fig 1a
+[t,c]=ode15s(@Pbinding,tspan,IC,options,K); 
+
+%Calculate percent thrombin 1a
+Percent_thrombin = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1.4e-6) * 100;
+
+plot(t, Percent_thrombin) %plot 1a
+
+legend('Percent of Thrombin'); 
+%axis
+xlabel('Time (s)');
+ylabel('% Thrombin formed');
+
+end
+
+function figure1b(IC,K,tspan,options)
+%Solve ODE Statement fig 1b
+%Solve ODE Statement fig 1b square
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K); 
+%Calculate thrombin 1b square
+thrombin_square = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+%--------------------------------------------------------
+%redefine fig1b circle
+K(7) = 1e6;
+K(9) = .0005;
+%Solve ODE statement fig 1b circle
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K);
+%Calculate thrombin 1b circle
+thrombin_circle = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+%---------------------------------------------------------
+%redefine fig1b diamond
+K(7) = 1e7;
+K(9) = .005;
+K(8) = 4e7;
+K(10) = .04;
+%Solve ODE statement fig 1b diamond
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K);
+%Calculate thrombin thrombin 1b diamond
+thrombin_diamond = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+%----------------------------------------------------------
+plot(t, thrombin_square, '-s', t , thrombin_diamond,'-d', t , thrombin_circle,'-o') %plot 1b 
+
+legend('Amount of Thrombin'); 
+%axis
+xlabel('Time (s)');
+ylabel('Thrombin formed');
+
+end
+
+function figure2a(IC,K,tspan,options)
+
+%Solve ODE Statement figure 2a
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K); 
+%Calculate percent thrombin
+Percent_thrombin2 = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1.4e-6) * 100;
+plot(t, Percent_thrombin2, '-s')
+
+hold on
+
+K(20) = 0; 
+%Solve ODE Statement
+[t,c]=ode15s(@Pbinding,tspan,IC,options,K); 
+
+%Calculate percent thrombin
+Percent_thrombin2 = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1.4e-6) * 100;
+
+plot(t, Percent_thrombin2, '-o')
+% legend('Amount of Thrombin'); 
+%axis
+title('Figure 2a');
+xlabel('Time (s)');
+ylabel('% Thrombin formation');
+legend('basic model', 'alternative model, k(20) = 0');
+end
+
+function figure2b(IC,K,tspan,options)
+%Solve ODE Statement 2b
+[t,c] = ode15s(@Pbinding, tspan, IC, options, K);
+%Calculate Xa
+Percent_Xa = (c(:, 16) + c(:, 8) + c(:, 10)) / (170e-9) * 100;
+plot(t, Percent_Xa, '-s')
+
+hold on
+
+K(20) = 0; 
+%Solve ODE Statement 2b
+[t,c]=ode15s(@Pbinding,tspan,IC,options,K); 
+%Calculate percent thrombin
+Percent_Xa = (c(:, 16) + c(:, 8) + c(:, 10)) / (170e-9) * 100;
+
+plot(t, Percent_Xa, '-o') 
+% legend('Amount of Thrombin'); 
+title('Figure 2b');
+%axis
+xlabel('Time (s)');
+ylabel('% Thrombin formation');
+% legend('basic model', 'alternative model, k(20) = 0');
+legend('Percent of Xa');
+%axis
+xlabel('Time (s)');
+ylabel('% Xa Formed');
+end
+
+function figure2c(IC,K,tspan,options)
+
+%Solve ODE Statement
+[t,c]=ode15s(@Pbinding,tspan,IC,options,K); 
+%Calculate percent thrombin
+Percent_IXa = (c(:, 15) + c(:, 7) + c(:, 14)) / (90e-9) * 100;
+
+plot(t, Percent_IXa, '-o') 
+
+hold on
+
+K(20) = 0; 
+%Solve ODE Statement
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K); 
+%Calculate percent thrombin
+Percent_IXa = (c(:, 15) + c(:, 7) + c(:, 14)) / (90e-9) * 100;
+
+plot(t, Percent_IXa, '-o') 
+% legend('Amount of Thrombin'); 
+title('Figure 2c');
+%axis
+xlabel('Time (s)');
+ylabel('% Thrombin formation');
+% legend('basic model', 'alternative model, k(20) = 0');
+end
+
+function figure3(IC,K,tspan,options)
+ 
+% Normal Percent Thrombin formation
+[t, c] = ode15s(@Pbinding, tspan, IC, options, K);
+%Calculate Thrombin 3 (square)
+Thrombin_square3 = (((1.2*c(:, 11)) + (1.0*c(:, 9))) / (1.4e-6)) * 100;
+ 
+ 
+% Percent formation of Factor Xa
+% 100% = 170nM
+%Solve ODE statement fig 3 circle
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K);
+%Calculate Percent Xa formation
+Xa_circle3 = ((c(:, 16) + c(:, 8) + c(:, 10)) / (170e-9)) * 100;
+ 
+ 
+% Percent formation of Factor IXa
+% 100% = 90nM
+%Solve ODE statement fig 3 diamonds
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K);
+%Calculate Percent IXa formation
+IXa_diamond3 = (((c(:, 15) + c(:, 7) + c(:, 14)) / (90e-9)) * 100);
+ 
+ 
+% Percent degradation of Factor V
+% 100% = 20nM
+%Solve ODE statement fig 3 triangle
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K);
+%Calculate Percent V degradation
+V_triangle3 = (((c(:, 4)) / (20e-9)) * 100);
+ 
+% Percent degradation of Factor VIII
+% 100% = .7nM
+%Solve ODE statement fig 3 triangle
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K);
+%Calculate Percent VIII degradation
+VIII_invtriangle3 = (((c(:, 5)) / (.7e-9)) * 100);
+ 
+% Plot all of figure 3
+plot(t, Thrombin_square3, '-s', t , Xa_circle3,'-o', t , IXa_diamond3,'-d', t , V_triangle3,'-^', t , VIII_invtriangle3,'-v');
+ 
+% Thrombin formation in units of [uM] vs. time [seconds = s]
+title('Figure 3');
+legend('Percent Thrombin formation', 'Percent Xa formation', 'Percent IXa formation', 'Percent V degradation', 'Percent VIII degradation'); 
+xlabel('Time (s)');
+ylabel('Percent Formation/Degradation [%]');
+ 
+end
+
+
+function figure4(IC,K,tspan,options)
+
+%square~ change parameters
+%Solve ODE Statement
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K); 
+%Calculate percent thrombin
+thrombin_square = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+%-------------------------------------------------------
+%circle ~ change parameters
+IC(1)= 10e-12;
+%Solve ODE Statement
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K); 
+%Calculate percent thrombin
+thrombin_circle = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+%--------------------------------------------------------
+%diamond ~ change parameters
+IC(1)= 50e-12;
+%Solve ODE Statement
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K); 
+%Calculate percent thrombin
+thrombin_diamond = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+%--------------------------------------------------------
+%triangles~ change parameters
+IC(1)= 500e-12;
+%Solve ODE Statement
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K); 
+%Calculate percent thrombin
+thrombin_triangles = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+%----------------------------------------------------------
+%upsidedown triangles~ change parameters
+IC(1)= 5e-9;
+%Solve ODE Statement
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K); 
+%Calculate percent thrombin
+thrombin_upsidedown = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+
+plot(t, thrombin_square, '-s', t , thrombin_circle, '-o', t , thrombin_diamond, '-d', t , thrombin_triangles, '-^', t , thrombin_upsidedown, '-v');
+
+title ('Figure4')
+%axis
+xlabel('Time (s)');
+ylabel('Thrombin formed');
+
+end
+
+function figure5a(IC,K,tspan,options)
+ 
+% Normal Thrombin formation
+[t, c] = ode15s(@Pbinding, tspan, IC, options, K);
+%Calculate Thrombin 5A (square)
+thrombin_square5a = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+ 
+% Thrombin when [VIII]initial = 0 (circle)
+IC(5) = 0; % [VIII]initial = 0
+%Solve ODE statement fig 5A circle
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K);
+%Calculate thrombin thrombin 5A circle
+thrombin_circle5a = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+ 
+% Thrombin when [V]initial = 0 (diamond)
+IC(4) = 0; % [V]initial = 0
+%Solve ODE statement fig 5A diamond
+[t,c]=ode15s(@Pbinding,tspan,IC,options, K);
+%Calculate thrombin thrombin 5A diamond
+thrombin_diamond5a = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+ 
+% Plot all of 5A
+plot(t, thrombin_square5a, '-s', t , thrombin_circle5a,'-o', t , thrombin_diamond5a,'-d') 
+ 
+% Thrombin formation in units of [uM] vs. time [seconds = s]
+title('Figure 5A');
+legend('Thrombin Formation', 'Thrombin Formation [VIII] = 0', 'Thrombin Formation [V] = 0');
+%axis
+xlabel('Time (s)');
+ylabel('Thrombin Formation [uM]');
+ 
+end
+
+function figure5b(IC,K,tspan,options)
+ 
+IC(1) = 1e-9; % [TF-VIIa]initial = 1nM
+% Thrombin formation
+[t, c] = ode15s(@Pbinding,tspan,IC,options,K);
+%Calculate Thrombin 5b (square)
+thrombin_square5b = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+ 
+% Thrombin when [VIII]initial = 0 (circle)
+IC(5) = 0; % [VIII]initial = 0
+%Solve ODE statement fig 5b circle
+[t,c]=ode15s(@Pbinding,tspan,IC,options,K);
+%Calculate thrombin thrombin 5b circle
+thrombin_circle5b = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+ 
+% Thrombin when [V]initial = 0 (diamond)
+IC(4) = 0; % [V]initial = 0
+%Solve ODE statement fig 5b diamond
+[t,c]=ode15s(@Pbinding,tspan,IC,options,K);
+%Calculate thrombin thrombin 5b diamond
+thrombin_diamond5b = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+ 
+% Plot all of 5b
+plot(t, thrombin_square5b, '-s', t , thrombin_circle5b,'-o', t , thrombin_diamond5b,'-d') 
+ 
+% Thrombin formation in units of [uM] vs. time [seconds = s]
+title('Figure 5b');
+legend('Thrombin Formation', 'Thrombin Formation [VIII] = 0', 'Thrombin Formation [V] = 0');
+%axis
+xlabel('Time (s)');
+ylabel('Thrombin Formation [uM]');
+ 
+end
+
+function figure6(IC,K,tspan,options)
+ 
+%Solve ODE statement
+[t,c]=ode15s(@Pbinding,tspan,IC,options,K);
+thrombin_square = ((1.2*c(:, 11) + 1.0*c(:, 9)) / (1.4e-6))*1.4;
+ 
+K(2)=0;
+c(4)=0;
+[t,c]=ode15s(@Pbinding,tspan,IC,options,K);
+thrombin_diamond = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+ 
+K(2)=2e7;
+K(1)=0;
+cdot = Pbinding(t, c, K);
+c(8) = 0;
+[t,c]=ode15s(@Pbinding,tspan,IC,options,K);
+thrombin_circle = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+ 
+K(4)=0;
+K(1)=2e7;
+cdot = Pbinding(t, c, K);
+c(5)=0;
+%c(11)=1.2;
+%c(9)=1;
+[t,c]=ode15s(@Pbinding,tspan,IC,options,K);
+thrombin_triangle = (1.2*c(:, 11) + 1.0*c(:, 9)) / (1e-6);
+ 
+% Plot all of figure 6
+plot(t, thrombin_square, '-s', t, thrombin_diamond,'-d', t, thrombin_circle,'-o', t, thrombin_triangle, '-^')  
+title('Figure6');
+legend('Percent Thrombin', 'Thrombin Formation k2=0', 'Thrombin Formation k1=0,c(8)=0', 'Thrombin Formation VIII=0');
+%axis
+xlabel('Time (s)');
+ylabel('Thrombin formed');
+ 
+end
